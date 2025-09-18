@@ -219,8 +219,9 @@ class SocialMediaService:
                     break
                     
                 # Analyze content
+                content_with_hashtag = user["content"].replace("{hashtag}", hashtag)
                 analysis = await self.content_analyzer.analyze_content_for_interests(
-                    user["content"].replace("{hashtag}", hashtag), 
+                    content_with_hashtag, 
                     platform.value
                 )
                 
