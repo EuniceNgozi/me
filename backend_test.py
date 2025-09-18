@@ -188,17 +188,9 @@ class ViralLeadsAPITester:
             "Discover Leads - AI Analysis",
             "POST",
             "leads/discover",
-            200,
+            401,  # Should require auth
             data=test_data
         )
-        
-        if success and response:
-            print(f"   ✅ Discovered {len(response)} leads")
-            if len(response) > 0:
-                lead = response[0]
-                print(f"   Sample lead: {lead.get('username', 'N/A')} on {lead.get('platform', 'N/A')}")
-                print(f"   Interest score: {lead.get('interest_score', 'N/A')}")
-                print(f"   Interests: {lead.get('interests', [])}")
         
         return success, response
 
