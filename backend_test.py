@@ -12,7 +12,7 @@ class ViralLeadsAPITester:
         self.test_results = []
         self.session = requests.Session()  # Use session for cookies
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
+    def run_test(self, name, method, endpoint, expected_status, data=None, params=None, use_auth=False):
         """Run a single API test"""
         url = f"{self.api_url}/{endpoint}" if endpoint else f"{self.api_url}/"
         headers = {'Content-Type': 'application/json'}
@@ -23,9 +23,9 @@ class ViralLeadsAPITester:
         
         try:
             if method == 'GET':
-                response = requests.get(url, headers=headers, params=params, timeout=30)
+                response = self.session.get(url, headers=headers, params=params, timeout=30)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=headers, timeout=30)
+                response = self.session.post(url, json=data, headers=headers, timeout=30)
 
             success = response.status_code == expected_status
             
