@@ -113,13 +113,41 @@ class ViralLeadsAPITester:
         
         return all_protected
 
+    def test_health_check(self):
+        """Test basic API health check"""
+        return self.run_test(
+            "API Health Check",
+            "GET",
+            "",
+            200
+        )
+
+    def test_api_structure(self):
+        """Test API structure and features"""
+        success, response = self.test_health_check()
+        if success and response:
+            print(f"   API Version: {response.get('version', 'Unknown')}")
+            print(f"   Status: {response.get('status', 'Unknown')}")
+            features = response.get('features', [])
+            print(f"   Features: {', '.join(features)}")
+            
+            # Check if expected features are present
+            expected_features = ['real_api_integration', 'user_authentication', 'monetization']
+            missing_features = [f for f in expected_features if f not in features]
+            if missing_features:
+                print(f"   ⚠️  Missing expected features: {missing_features}")
+            else:
+                print(f"   ✅ All expected features present")
+        
+        return success, response
+
     def test_analytics(self):
         """Test analytics endpoint"""
         return self.run_test(
             "Analytics Endpoint",
             "GET",
             "analytics",
-            200
+            401  # Should require auth
         )
 
     def test_trending_topics(self):
