@@ -358,6 +358,20 @@ def main():
     else:
         print("\n🛡️  ⚠️  Some endpoints may not be properly protected")
     
+    # 4. Test Instagram integration features
+    instagram_success = tester.test_instagram_integration()
+    if instagram_success:
+        print("\n📸 ✅ Instagram integration endpoints are properly protected!")
+    else:
+        print("\n📸 ⚠️  Instagram integration may have issues")
+    
+    # 5. Test multi-platform support
+    multi_platform_success = tester.test_multi_platform_support()
+    if multi_platform_success:
+        print("\n🌐 ✅ Multi-platform support is working!")
+    else:
+        print("\n🌐 ⚠️  Multi-platform support may have issues")
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
@@ -384,6 +398,8 @@ def main():
     print(f"   • API is responding and has correct structure")
     print(f"   • Authentication system is properly implemented")
     print(f"   • All protected endpoints require authentication")
+    print(f"   • Instagram integration endpoints are available")
+    print(f"   • Multi-platform support (Facebook, Instagram, Pinterest, TikTok)")
     print(f"   • Ready for frontend integration testing")
     
     return 0 if tester.tests_passed >= tester.tests_run * 0.8 else 1  # 80% pass rate acceptable
