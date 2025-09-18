@@ -333,6 +333,128 @@ Return ONLY a valid JSON response with: interests, interest_score, viral_potenti
         
         return (hashtags + relevant_words)[:5]
 
+# Instagram API Service  
+class InstagramAPIService:
+    def __init__(self):
+        self.base_url = "https://graph.facebook.com/v19.0"
+        self.content_analyzer = ContentAnalysisService()
+    
+    async def get_instagram_user_info(self, access_token: str) -> Dict[str, Any]:
+        """Get Instagram business account information"""
+        try:
+            async with httpx.AsyncClient() as client:
+                url = f"{self.base_url}/me"
+                params = {
+                    "fields": "id,username,name,biography,website,followers_count,follows_count,media_count,profile_picture_url",
+                    "access_token": access_token
+                }
+                
+                response = await client.get(url, params=params, timeout=30)
+                
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    logger.error(f"Instagram API error: {response.status_code} - {response.text}")
+                    return {}
+        except Exception as e:
+            logger.error(f"Instagram API request failed: {str(e)}")
+            return {}
+    
+    async def get_instagram_media(self, access_token: str, user_id: str = "me", limit: int = 25) -> List[Dict]:
+        """Get Instagram business account media posts"""
+        try:
+            async with httpx.AsyncClient() as client:
+                url = f"{self.base_url}/{user_id}/media"
+                params = {
+                    "fields": "id,media_type,media_url,permalink,thumbnail_url,caption,timestamp,username,comments_count,like_count",
+                    "limit": limit,
+                    "access_token": access_token
+                }
+                
+                response = await client.get(url, params=params, timeout=30)
+                
+                if response.status_code == 200:
+                    return response.json().get("data", [])
+                else:
+                    logger.error(f"Instagram media API error: {response.status_code} - {response.text}")
+                    return []
+        except Exception as e:
+            logger.error(f"Instagram media request failed: {str(e)}")
+            return []
+    
+    async def get_instagram_insights(self, media_id: str, access_token: str) -> Dict[str, Any]:
+        """Get insights for Instagram media"""
+        try:
+            async with httpx.AsyncClient() as client:
+                url = f"{self.base_url}/{media_id}/insights"
+                params = {
+                    "metric": "impressions,reach,engagement,saves,profile_visits,follows",
+                    "access_token": access_token
+                }
+                
+                response = await client.get(url, params=params, timeout=30)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    insights = {}
+                    
+                    for item in data.get("data", []):
+                        metric_name = item.get("name")
+                        values = item.get("values", [])
+                        if values:
+                            insights[metric_name] = values[0].get("value", 0)
+                    
+                    return insights
+                else:
+                    logger.error(f"Instagram insights error: {response.status_code} - {response.text}")
+                    return {}
+        except Exception as e:
+            logger.error(f"Instagram insights request failed: {str(e)}")
+            return {}
+    
+    async def analyze_instagram_posts_for_leads(self, posts: List[Dict], user_id: str) -> List[Lead]:
+        """Analyze Instagram posts to generate leads"""
+        leads = []
+        
+        for post in posts:
+            caption = post.get("caption", "")
+            if not caption or len(caption) < 15:
+                continue
+            
+            # Analyze content with AI
+            analysis = await self.content_analyzer.analyze_content_for_interests(caption, "instagram")
+            
+            # Only create leads for users with significant digital product interest
+            if analysis.get("interest_score", 0) > 25:
+                username = post.get("username", f"ig_user_{post.get('id', '')[:8]}")
+                
+                # Calculate engagement metrics
+                likes = post.get("like_count", 0)
+                comments = post.get("comments_count", 0)
+                
+                # Estimate follower count and engagement rate (Instagram doesn't provide follower count easily)
+                estimated_followers = max(1000, likes * 20)  # Rough estimation
+                engagement_rate = min(0.15, (likes + comments * 3) / estimated_followers)
+                
+                lead = Lead(
+                    user_id=user_id,
+                    username=username,
+                    platform=Platform.INSTAGRAM,
+                    profile_url=post.get("permalink", ""),
+                    follower_count=estimated_followers,
+                    engagement_rate=engagement_rate,
+                    interests=[InterestCategory(interest) for interest in analysis.get("interests", []) if interest in [e.value for e in InterestCategory]],
+                    interest_score=analysis.get("interest_score", 0),
+                    viral_potential=analysis.get("viral_potential", 0),
+                    trending_topics=analysis.get("trending_topics", []),
+                    analyzed_posts=1,
+                    real_data=True
+                )
+                
+                leads.append(lead)
+        
+        return leads
+
 # Facebook API Service
 class FacebookAPIService:
     def __init__(self):
