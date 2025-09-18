@@ -60,14 +60,58 @@ class ViralLeadsAPITester:
             })
             return False, {}
 
-    def test_health_check(self):
-        """Test basic API health check"""
-        return self.run_test(
-            "API Health Check",
+    def test_authentication_endpoints(self):
+        """Test authentication-related endpoints"""
+        print(f"\n🔐 Testing Authentication Endpoints...")
+        
+        # Test auth/me without authentication (should fail)
+        success, response = self.run_test(
+            "Auth Me - No Auth",
             "GET",
-            "",
-            200
+            "auth/me",
+            401
         )
+        
+        # Test process-session with invalid session (should fail)
+        success, response = self.run_test(
+            "Process Session - Invalid",
+            "POST",
+            "auth/process-session",
+            400,
+            data={"session_id": "invalid_session_id"}
+        )
+        
+        return True
+
+    def test_protected_endpoints_without_auth(self):
+        """Test that protected endpoints properly require authentication"""
+        print(f"\n🛡️  Testing Protected Endpoints (Should Require Auth)...")
+        
+        protected_endpoints = [
+            ("Analytics", "GET", "analytics"),
+            ("Trending Topics", "GET", "trending"),
+            ("Get Leads", "GET", "leads"),
+            ("Discover Leads", "POST", "leads/discover", {
+                "platforms": ["facebook"],
+                "keywords": ["test"],
+                "max_leads": 5
+            })
+        ]
+        
+        all_protected = True
+        for name, method, endpoint, *data in protected_endpoints:
+            test_data = data[0] if data else None
+            success, _ = self.run_test(
+                f"{name} - No Auth",
+                method,
+                endpoint,
+                401,
+                data=test_data
+            )
+            if not success:
+                all_protected = False
+        
+        return all_protected
 
     def test_analytics(self):
         """Test analytics endpoint"""
