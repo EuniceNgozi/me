@@ -333,6 +333,118 @@ Return ONLY a valid JSON response with: interests, interest_score, viral_potenti
         
         return (hashtags + relevant_words)[:5]
 
+# Pinterest API Service
+class PinterestAPIService:
+    def __init__(self):
+        self.base_url = "https://api.pinterest.com/v5"
+        self.content_analyzer = ContentAnalysisService()
+    
+    async def get_pinterest_user_info(self, access_token: str) -> Dict[str, Any]:
+        """Get Pinterest business account information"""
+        try:
+            async with httpx.AsyncClient() as client:
+                headers = {"Authorization": f"Bearer {access_token}"}
+                url = f"{self.base_url}/user_account"
+                
+                response = await client.get(url, headers=headers, timeout=30)
+                
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    logger.error(f"Pinterest API error: {response.status_code} - {response.text}")
+                    return {}
+        except Exception as e:
+            logger.error(f"Pinterest API request failed: {str(e)}")
+            return {}
+    
+    async def get_pinterest_boards(self, access_token: str, limit: int = 25) -> List[Dict]:
+        """Get Pinterest user's boards"""
+        try:
+            async with httpx.AsyncClient() as client:
+                headers = {"Authorization": f"Bearer {access_token}"}
+                url = f"{self.base_url}/boards"
+                params = {"page_size": limit}
+                
+                response = await client.get(url, headers=headers, params=params, timeout=30)
+                
+                if response.status_code == 200:
+                    return response.json().get("items", [])
+                else:
+                    logger.error(f"Pinterest boards API error: {response.status_code} - {response.text}")
+                    return []
+        except Exception as e:
+            logger.error(f"Pinterest boards request failed: {str(e)}")
+            return []
+    
+    async def get_board_pins(self, access_token: str, board_id: str, limit: int = 25) -> List[Dict]:
+        """Get pins from a Pinterest board"""
+        try:
+            async with httpx.AsyncClient() as client:
+                headers = {"Authorization": f"Bearer {access_token}"}
+                url = f"{self.base_url}/boards/{board_id}/pins"
+                params = {"page_size": limit}
+                
+                response = await client.get(url, headers=headers, params=params, timeout=30)
+                
+                if response.status_code == 200:
+                    return response.json().get("items", [])
+                else:
+                    logger.error(f"Pinterest pins API error: {response.status_code} - {response.text}")
+                    return []
+        except Exception as e:
+            logger.error(f"Pinterest pins request failed: {str(e)}")
+            return []
+    
+    async def analyze_pinterest_content_for_leads(self, boards: List[Dict], user_id: str) -> List[Lead]:
+        """Analyze Pinterest boards and pins to generate leads"""
+        leads = []
+        
+        for board in boards[:5]:  # Limit boards to process
+            board_name = board.get("name", "")
+            board_description = board.get("description", "")
+            
+            # Combine board info for analysis
+            content_to_analyze = f"{board_name}. {board_description}"
+            
+            if len(content_to_analyze.strip()) < 10:
+                continue
+            
+            # Analyze content with AI
+            analysis = await self.content_analyzer.analyze_content_for_interests(content_to_analyze, "pinterest")
+            
+            # Only create leads for boards with significant digital product interest
+            if analysis.get("interest_score", 0) > 20:
+                # Extract meaningful username from board owner
+                board_owner = board.get("owner", {})
+                username = board_owner.get("username", f"pinterest_user_{board.get('id', '')[:8]}")
+                
+                # Estimate engagement based on board stats
+                pin_count = board.get("pin_count", 0)
+                follower_count = board.get("follower_count", 0)
+                
+                # Calculate estimated engagement rate
+                estimated_followers = max(500, follower_count)
+                engagement_rate = min(0.08, (pin_count * 2 + follower_count) / max(estimated_followers * 10, 1))
+                
+                lead = Lead(
+                    user_id=user_id,
+                    username=username,
+                    platform=Platform.PINTEREST,
+                    profile_url=f"https://pinterest.com/{username}/",
+                    follower_count=estimated_followers,
+                    engagement_rate=engagement_rate,
+                    interests=[InterestCategory(interest) for interest in analysis.get("interests", []) if interest in [e.value for e in InterestCategory]],
+                    interest_score=analysis.get("interest_score", 0),
+                    viral_potential=analysis.get("viral_potential", 0),
+                    trending_topics=analysis.get("trending_topics", []),
+                    analyzed_posts=min(pin_count, 10),
+                    real_data=True
+                )
+                
+                leads.append(lead)
+        
+        return leads
+
 # Instagram API Service  
 class InstagramAPIService:
     def __init__(self):
