@@ -194,6 +194,89 @@ class ViralLeadsAPITester:
         
         return success, response
 
+    def test_instagram_integration(self):
+        """Test Instagram-specific integration features"""
+        print(f"\n📸 Testing Instagram Integration...")
+        
+        # Test Instagram platform in lead discovery
+        instagram_test_data = {
+            "platforms": ["instagram"],
+            "keywords": ["content creation", "influencer marketing"],
+            "max_leads": 10,
+            "min_followers": 1000,
+            "days_back": 30
+        }
+        
+        success, response = self.run_test(
+            "Instagram Lead Discovery",
+            "POST",
+            "leads/discover",
+            401,  # Should require auth
+            data=instagram_test_data
+        )
+        
+        # Test Instagram trending topics
+        success_trending, trending_response = self.run_test(
+            "Instagram Trending Topics",
+            "GET",
+            "trending",
+            401,  # Should require auth
+            params={"platform": "instagram"}
+        )
+        
+        # Test platform connection endpoint for Instagram
+        connect_data = {
+            "platform": "instagram",
+            "access_token": "test_token_123"
+        }
+        
+        success_connect, connect_response = self.run_test(
+            "Instagram Platform Connection",
+            "POST",
+            "platforms/connect",
+            401,  # Should require auth
+            data=connect_data
+        )
+        
+        return success and success_trending and success_connect
+
+    def test_multi_platform_support(self):
+        """Test multi-platform support including Instagram"""
+        print(f"\n🌐 Testing Multi-Platform Support...")
+        
+        # Test with all platforms including Instagram
+        multi_platform_data = {
+            "platforms": ["facebook", "instagram", "pinterest", "tiktok"],
+            "keywords": ["digital marketing", "online business"],
+            "max_leads": 20,
+            "min_followers": 500,
+            "days_back": 30
+        }
+        
+        success, response = self.run_test(
+            "Multi-Platform Lead Discovery",
+            "POST",
+            "leads/discover",
+            401,  # Should require auth
+            data=multi_platform_data
+        )
+        
+        # Test trending topics for each platform
+        platforms = ["facebook", "instagram", "pinterest", "tiktok"]
+        platform_tests = []
+        
+        for platform in platforms:
+            platform_success, platform_response = self.run_test(
+                f"{platform.title()} Trending Topics",
+                "GET",
+                "trending",
+                401,  # Should require auth
+                params={"platform": platform}
+            )
+            platform_tests.append(platform_success)
+        
+        return success and all(platform_tests)
+
     def test_ai_integration(self):
         """Test if AI integration is working by checking lead discovery results"""
         print(f"\n🤖 Testing AI Integration...")
