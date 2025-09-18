@@ -69,6 +69,7 @@ class User(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     facebook_access_token: Optional[str] = None
     instagram_access_token: Optional[str] = None
+    pinterest_access_token: Optional[str] = None
 
 class Session(BaseModel):
     session_token: str
