@@ -550,11 +550,12 @@ class FacebookAPIService:
         
         return leads
 
-# Social Media Service (Enhanced with Real API)
+# Social Media Service (Enhanced with Real APIs)
 class SocialMediaService:
     def __init__(self):
         self.content_analyzer = ContentAnalysisService()
         self.facebook_api = FacebookAPIService()
+        self.instagram_api = InstagramAPIService()
     
     async def discover_leads_from_keywords(
         self, 
@@ -571,12 +572,51 @@ class SocialMediaService:
                 # Use real Facebook API
                 facebook_leads = await self._discover_facebook_leads(keywords, user, limit // len(platforms))
                 all_leads.extend(facebook_leads)
+            elif platform == Platform.INSTAGRAM and user.instagram_access_token:
+                # Use real Instagram API
+                instagram_leads = await self._discover_instagram_leads(keywords, user, limit // len(platforms))
+                all_leads.extend(instagram_leads)
             else:
                 # Use mock data for other platforms or if no token
                 mock_leads = await self._discover_mock_leads(keywords, platform, user.id, limit // len(platforms))
                 all_leads.extend(mock_leads)
         
         return all_leads[:limit]
+    
+    async def _discover_instagram_leads(self, keywords: List[str], user: User, limit: int) -> List[Lead]:
+        """Discover leads from Instagram using real API"""
+        leads = []
+        
+        try:
+            # Get user's Instagram media posts
+            posts = await self.instagram_api.get_instagram_media(
+                user.instagram_access_token, limit=50
+            )
+            
+            # Analyze posts for leads
+            if posts:
+                instagram_leads = await self.instagram_api.analyze_instagram_posts_for_leads(posts, user.id)
+                
+                # Filter by keywords relevance
+                keyword_filtered_leads = []
+                for lead in instagram_leads:
+                    # Check if any trending topics match keywords
+                    lead_topics = [topic.lower() for topic in lead.trending_topics]
+                    keyword_matches = any(
+                        keyword.lower() in topic or topic in keyword.lower() 
+                        for keyword in keywords 
+                        for topic in lead_topics
+                    )
+                    
+                    if keyword_matches or lead.interest_score > 40:
+                        keyword_filtered_leads.append(lead)
+                
+                leads.extend(keyword_filtered_leads[:limit])
+        
+        except Exception as e:
+            logger.error(f"Instagram lead discovery failed: {str(e)}")
+        
+        return leads[:limit]
     
     async def _discover_facebook_leads(self, keywords: List[str], user: User, limit: int) -> List[Lead]:
         """Discover leads from Facebook using real API"""
