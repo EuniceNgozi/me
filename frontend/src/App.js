@@ -910,7 +910,7 @@ const SettingsPage = () => {
               </div>
               <div>
                 <h4>Instagram</h4>
-                <p>Connect Instagram Business account for post analysis and engagement metrics</p>
+                <p>Connect Instagram Business account for real post analysis and engagement metrics</p>
               </div>
             </div>
             <div className="connection-status">
@@ -920,8 +920,12 @@ const SettingsPage = () => {
                   Connected
                 </span>
               ) : (
-                <button className="btn btn-secondary" disabled>
-                  Coming Soon
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => window.open('https://developers.facebook.com/docs/instagram-basic-display-api/getting-started', '_blank')}
+                >
+                  <LinkIcon size={16} />
+                  Connect Instagram
                 </button>
               )}
             </div>
