@@ -693,6 +693,17 @@ class SocialMediaService:
 
     async def analyze_trending_topics(self, platform: Platform, days_back: int = 7) -> List[Dict]:
         """Analyze trending topics for digital products"""
+        
+        # For Instagram, try to get real hashtag data if we have access
+        if platform == Platform.INSTAGRAM:
+            try:
+                # Get real Instagram trending data based on recent posts analysis
+                real_trends = await self._analyze_real_instagram_trends()
+                if real_trends:
+                    return real_trends
+            except Exception as e:
+                logger.info(f"Using mock Instagram trends: {str(e)}")
+        
         # Enhanced mock trending topics with more realistic data
         trending_data = {
             Platform.FACEBOOK: [
@@ -707,7 +718,9 @@ class SocialMediaService:
                 {"topic": "design tools tutorial", "engagement": 87.6, "posts": 3450, "growth": 56.4},
                 {"topic": "business automation", "engagement": 82.1, "posts": 2890, "growth": 48.7},
                 {"topic": "online business tips", "engagement": 79.8, "posts": 2567, "growth": 44.2},
-                {"topic": "productivity apps review", "engagement": 77.3, "posts": 2234, "growth": 41.6}
+                {"topic": "productivity apps review", "engagement": 77.3, "posts": 2234, "growth": 41.6},
+                {"topic": "creator economy tools", "engagement": 75.1, "posts": 2001, "growth": 38.3},
+                {"topic": "social media management", "engagement": 72.8, "posts": 1876, "growth": 34.7}
             ],
             Platform.PINTEREST: [
                 {"topic": "digital planner templates", "engagement": 91.5, "posts": 5600, "growth": 65.4},
