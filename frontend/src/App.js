@@ -563,6 +563,9 @@ const LeadDiscovery = () => {
                     {platform === 'facebook' && user?.has_facebook_token && (
                       <CheckCircle size={16} style={{ marginLeft: '0.5rem', color: '#10ac84' }} />
                     )}
+                    {platform === 'instagram' && user?.has_instagram_token && (
+                      <CheckCircle size={16} style={{ marginLeft: '0.5rem', color: '#10ac84' }} />
+                    )}
                   </span>
                 </label>
               ))}
