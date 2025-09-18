@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import axios from "axios";
 import { 
   TrendingUp, 
@@ -13,14 +13,254 @@ import {
   ArrowUp,
   ArrowDown,
   Loader2,
-  PlusCircle
+  PlusCircle,
+  LogOut,
+  User,
+  Crown,
+  Link as LinkIcon,
+  CheckCircle,
+  AlertCircle,
+  Settings
 } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Auth Context
+const AuthContext = React.createContext();
+
+// Auth Provider
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      // Check for session_id in URL fragment first
+      const hash = window.location.hash;
+      if (hash && hash.includes('session_id=')) {
+        const sessionId = hash.split('session_id=')[1].split('&')[0];
+        await processSessionId(sessionId);
+        return;
+      }
+
+      // Check existing session
+      const response = await axios.get(`${API}/auth/me`, {
+        withCredentials: true
+      });
+      
+      setUser(response.data);
+      setIsAuthenticated(true);
+    } catch (error) {
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const processSessionId = async (sessionId) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/auth/process-session`, {
+        session_id: sessionId
+      }, {
+        withCredentials: true
+      });
+
+      if (response.data.success) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (error) {
+      console.error('Session processing failed:', error);
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = () => {
+    const redirectUrl = encodeURIComponent(`${window.location.origin}/dashboard`);
+    window.location.href = `https://auth.emergentagent.com/?redirect=${redirectUrl}`;
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post(`${API}/auth/logout`, {}, {
+        withCredentials: true
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      window.location.href = '/';
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
+      loading,
+      login,
+      logout,
+      checkAuth
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+const useAuth = () => {
+  const context = React.useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+// Landing Page Component
+const LandingPage = () => {
+  const { login } = useAuth();
+
+  return (
+    <div className="landing-page">
+      <div className="landing-header">
+        <div className="logo">
+          <div className="logo-icon">
+            <Zap />
+          </div>
+          Viral Leads
+        </div>
+        <button className="btn btn-primary" onClick={login}>
+          Get Started Free
+        </button>
+      </div>
+      
+      <div className="landing-hero">
+        <div className="hero-content">
+          <h1>AI-Powered Social Media Lead Generation</h1>
+          <p>Discover potential customers interested in digital products across Facebook, Instagram, Pinterest, and TikTok with advanced AI analysis.</p>
+          
+          <div className="hero-features">
+            <div className="feature-item">
+              <Target className="feature-icon" />
+              <span>Smart Lead Discovery</span>
+            </div>
+            <div className="feature-item">
+              <BarChart3 className="feature-icon" />
+              <span>AI Content Analysis</span>
+            </div>
+            <div className="feature-item">
+              <TrendingUp className="feature-icon" />
+              <span>Trending Topics</span>
+            </div>
+          </div>
+          
+          <button className="btn btn-primary hero-cta" onClick={login}>
+            Start Discovering Leads
+            <ArrowUp className="rotate-45" size={18} />
+          </button>
+          
+          <p className="hero-subtitle">Free tier includes 50 leads per month • No credit card required</p>
+        </div>
+      </div>
+      
+      <div className="landing-stats">
+        <div className="stat-item">
+          <div className="stat-number">10K+</div>
+          <div className="stat-label">Leads Discovered</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-number">4</div>
+          <div className="stat-label">Platforms</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-number">95%</div>
+          <div className="stat-label">Accuracy</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Login Page Component
+const LoginPage = () => {
+  const { login } = useAuth();
+
+  return (
+    <div className="login-page">
+      <div className="login-container">
+        <div className="login-header">
+          <div className="logo">
+            <div className="logo-icon">
+              <Zap />
+            </div>
+            Viral Leads
+          </div>
+        </div>
+        
+        <div className="login-content">
+          <h2>Welcome Back</h2>
+          <p>Sign in to continue discovering high-quality leads with AI-powered analysis.</p>
+          
+          <button className="btn btn-primary login-btn" onClick={login}>
+            <User size={18} />
+            Continue with Google
+          </button>
+          
+          <div className="login-features">
+            <div className="login-feature">
+              <CheckCircle size={16} />
+              <span>Secure OAuth Authentication</span>
+            </div>
+            <div className="login-feature">
+              <CheckCircle size={16} />
+              <span>Free Tier Available</span>
+            </div>
+            <div className="login-feature">
+              <CheckCircle size={16} />
+              <span>Real-time Lead Discovery</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Dashboard Component
 const Dashboard = () => {
+  const { user } = useAuth();
   const [analytics, setAnalytics] = useState(null);
   const [leads, setLeads] = useState([]);
   const [trending, setTrending] = useState([]);
@@ -34,9 +274,9 @@ const Dashboard = () => {
     try {
       setLoading(true);
       const [analyticsRes, leadsRes, trendingRes] = await Promise.all([
-        axios.get(`${API}/analytics`),
-        axios.get(`${API}/leads?limit=6`),
-        axios.get(`${API}/trending`)
+        axios.get(`${API}/analytics`, { withCredentials: true }),
+        axios.get(`${API}/leads?limit=6`, { withCredentials: true }),
+        axios.get(`${API}/trending`, { withCredentials: true })
       ]);
       
       setAnalytics(analyticsRes.data);
@@ -62,12 +302,45 @@ const Dashboard = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">AI-powered social media lead generation insights</p>
+          <p className="page-subtitle">
+            Welcome back, {user?.name}! Here's your lead generation overview.
+          </p>
         </div>
-        <button className="btn btn-primary">
-          <PlusCircle size={18} />
-          Discover New Leads
-        </button>
+        <div className="header-actions">
+          <div className="user-tier">
+            {user?.tier === 'free' && <Crown size={16} />}
+            <span>{user?.tier?.toUpperCase()} Plan</span>
+          </div>
+          <NavLink to="/discover" className="btn btn-primary">
+            <PlusCircle size={18} />
+            Discover New Leads
+          </NavLink>
+        </div>
+      </div>
+
+      <div className="usage-warning">
+        {user?.tier === 'free' && (
+          <div className="usage-bar">
+            <div className="usage-info">
+              <span>Monthly Usage: {user.leads_discovered || 0} / {user.monthly_limit || 50} leads</span>
+              <span className="usage-percentage">
+                {Math.round(((user.leads_discovered || 0) / (user.monthly_limit || 50)) * 100)}%
+              </span>
+            </div>
+            <div className="usage-progress">
+              <div 
+                className="usage-fill" 
+                style={{ width: `${Math.min(100, ((user.leads_discovered || 0) / (user.monthly_limit || 50)) * 100)}%` }}
+              ></div>
+            </div>
+            {(user.leads_discovered || 0) > (user.monthly_limit || 50) * 0.8 && (
+              <p className="usage-warning-text">
+                <AlertCircle size={16} />
+                You're approaching your monthly limit. Upgrade to Pro for unlimited access.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="stats-grid">
@@ -77,9 +350,8 @@ const Dashboard = () => {
           </div>
           <div className="stat-value">{analytics?.total_leads || 0}</div>
           <div className="stat-label">Total Leads</div>
-          <div className="stat-change positive">
-            <ArrowUp size={16} />
-            +12% this week
+          <div className="stat-meta">
+            {analytics?.user_stats?.real_api_leads || 0} from real APIs
           </div>
         </div>
 
@@ -91,7 +363,7 @@ const Dashboard = () => {
           <div className="stat-label">Active Platforms</div>
           <div className="stat-change positive">
             <ArrowUp size={16} />
-            +2 new sources
+            Real API integration
           </div>
         </div>
 
@@ -103,7 +375,7 @@ const Dashboard = () => {
           <div className="stat-label">Avg Interest Score</div>
           <div className="stat-change positive">
             <ArrowUp size={16} />
-            +8.5% improvement
+            AI-powered analysis
           </div>
         </div>
 
@@ -115,7 +387,7 @@ const Dashboard = () => {
           <div className="stat-label">Trending Topics</div>
           <div className="stat-change positive">
             <ArrowUp size={16} />
-            +15 new trends
+            Real-time detection
           </div>
         </div>
       </div>
@@ -123,7 +395,7 @@ const Dashboard = () => {
       <div className="content-section">
         <div className="section-header">
           <h2 className="section-title">Recent Leads</h2>
-          <button className="btn btn-secondary">View All</button>
+          <NavLink to="/discover" className="btn btn-secondary">View All</NavLink>
         </div>
         
         <div className="leads-grid">
@@ -136,6 +408,9 @@ const Dashboard = () => {
           <div className="empty-state">
             <h3>No leads discovered yet</h3>
             <p>Start discovering leads by analyzing social media platforms</p>
+            <NavLink to="/discover" className="btn btn-primary">
+              Discover Your First Leads
+            </NavLink>
           </div>
         )}
       </div>
@@ -143,7 +418,7 @@ const Dashboard = () => {
       <div className="content-section">
         <div className="section-header">
           <h2 className="section-title">Trending Topics</h2>
-          <button className="btn btn-secondary">Explore All</button>
+          <NavLink to="/trending" className="btn btn-secondary">Explore All</NavLink>
         </div>
         
         <ul className="trending-list">
@@ -167,27 +442,40 @@ const Dashboard = () => {
 
 // Lead Discovery Component
 const LeadDiscovery = () => {
+  const { user } = useAuth();
   const [keywords, setKeywords] = useState("");
   const [platforms, setPlatforms] = useState(["facebook", "instagram"]);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleDiscoverLeads = async () => {
     if (!keywords.trim()) return;
     
     try {
       setLoading(true);
+      setError("");
+      
       const response = await axios.post(`${API}/leads/discover`, {
         platforms: platforms,
         keywords: keywords.split(',').map(k => k.trim()),
-        max_leads: 50,
+        max_leads: user?.tier === 'free' ? 20 : 50,
         min_followers: 1000,
         days_back: 30
+      }, {
+        withCredentials: true
       });
       
       setLeads(response.data);
     } catch (error) {
       console.error('Failed to discover leads:', error);
+      if (error.response?.status === 429) {
+        setError("You've reached your monthly limit. Upgrade to Pro for unlimited lead discovery.");
+      } else if (error.response?.status === 401) {
+        setError("Authentication required. Please log in again.");
+      } else {
+        setError("Failed to discover leads. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -208,11 +496,31 @@ const LeadDiscovery = () => {
           <h1 className="page-title">Discover Leads</h1>
           <p className="page-subtitle">Find potential customers interested in digital products</p>
         </div>
+        <div className="usage-display">
+          {user?.tier === 'free' && (
+            <span className="usage-counter">
+              {user.leads_discovered || 0} / {user.monthly_limit || 50} leads used
+            </span>
+          )}
+        </div>
       </div>
+
+      {error && (
+        <div className="error-banner">
+          <AlertCircle size={20} />
+          {error}
+        </div>
+      )}
 
       <div className="content-section">
         <div className="section-header">
           <h2 className="section-title">Search Parameters</h2>
+          {!user?.has_facebook_token && (
+            <div className="connection-notice">
+              <LinkIcon size={16} />
+              Connect Facebook for real API data
+            </div>
+          )}
         </div>
         
         <div style={{ display: 'grid', gap: '1.5rem' }}>
@@ -250,7 +558,12 @@ const LeadDiscovery = () => {
                     onChange={() => togglePlatform(platform)}
                     style={{ marginRight: '0.5rem' }}
                   />
-                  <span style={{ textTransform: 'capitalize' }}>{platform}</span>
+                  <span style={{ textTransform: 'capitalize' }}>
+                    {platform}
+                    {platform === 'facebook' && user?.has_facebook_token && (
+                      <CheckCircle size={16} style={{ marginLeft: '0.5rem', color: '#10ac84' }} />
+                    )}
+                  </span>
                 </label>
               ))}
             </div>
@@ -259,13 +572,13 @@ const LeadDiscovery = () => {
           <button 
             className="btn btn-primary" 
             onClick={handleDiscoverLeads}
-            disabled={loading || !keywords.trim()}
+            disabled={loading || !keywords.trim() || (user?.tier === 'free' && user?.leads_discovered >= user?.monthly_limit)}
             style={{ alignSelf: 'start' }}
           >
             {loading ? (
               <>
                 <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                Discovering...
+                Analyzing with AI...
               </>
             ) : (
               <>
@@ -281,6 +594,11 @@ const LeadDiscovery = () => {
         <div className="content-section">
           <div className="section-header">
             <h2 className="section-title">Discovered Leads ({leads.length})</h2>
+            <div className="lead-stats">
+              <span className="real-data-count">
+                {leads.filter(l => l.real_data).length} from real APIs
+              </span>
+            </div>
           </div>
           
           <div className="leads-grid">
@@ -294,7 +612,7 @@ const LeadDiscovery = () => {
   );
 };
 
-// Trending Topics Component
+// Trending Topics Component (unchanged, but with auth)
 const TrendingTopics = () => {
   const [trending, setTrending] = useState([]);
   const [selectedPlatform, setSelectedPlatform] = useState("");
@@ -310,7 +628,7 @@ const TrendingTopics = () => {
       const url = selectedPlatform 
         ? `${API}/trending?platform=${selectedPlatform}`
         : `${API}/trending`;
-      const response = await axios.get(url);
+      const response = await axios.get(url, { withCredentials: true });
       setTrending(response.data);
     } catch (error) {
       console.error('Failed to fetch trending topics:', error);
@@ -333,7 +651,7 @@ const TrendingTopics = () => {
           <h2 className="section-title">Platform Filter</h2>
         </div>
         
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
           <button 
             className={`btn ${selectedPlatform === "" ? "btn-primary" : "btn-secondary"}`}
             onClick={() => setSelectedPlatform("")}
@@ -377,7 +695,7 @@ const TrendingTopics = () => {
   );
 };
 
-// Lead Card Component
+// Enhanced Lead Card Component
 const LeadCard = ({ lead }) => {
   return (
     <div className="lead-card">
@@ -391,9 +709,17 @@ const LeadCard = ({ lead }) => {
             <p>{lead.follower_count.toLocaleString()} followers</p>
           </div>
         </div>
-        <span className={`platform-badge ${lead.platform}`}>
-          {lead.platform}
-        </span>
+        <div className="lead-badges">
+          <span className={`platform-badge ${lead.platform}`}>
+            {lead.platform}
+          </span>
+          {lead.real_data && (
+            <span className="real-data-badge">
+              <CheckCircle size={12} />
+              Real API
+            </span>
+          )}
+        </div>
       </div>
       
       <div className="lead-metrics">
@@ -435,8 +761,10 @@ const LeadCard = ({ lead }) => {
   );
 };
 
-// Sidebar Component
+// Enhanced Sidebar Component
 const Sidebar = () => {
+  const { user, logout } = useAuth();
+
   return (
     <div className="sidebar">
       <div className="sidebar-header">
@@ -448,10 +776,26 @@ const Sidebar = () => {
         </div>
       </div>
       
+      {user && (
+        <div className="user-info-sidebar">
+          <div className="user-avatar-sidebar">
+            {user.picture ? (
+              <img src={user.picture} alt={user.name} />
+            ) : (
+              user.name.charAt(0).toUpperCase()
+            )}
+          </div>
+          <div className="user-details">
+            <div className="user-name">{user.name}</div>
+            <div className="user-tier">{user.tier?.toUpperCase()} Plan</div>
+          </div>
+        </div>
+      )}
+      
       <nav>
         <ul className="nav-menu">
           <li className="nav-item">
-            <NavLink to="/" className="nav-link" end>
+            <NavLink to="/dashboard" className="nav-link">
               <BarChart3 size={20} />
               Dashboard
             </NavLink>
@@ -468,8 +812,160 @@ const Sidebar = () => {
               Trending Topics
             </NavLink>
           </li>
+          <li className="nav-item">
+            <NavLink to="/settings" className="nav-link">
+              <Settings size={20} />
+              Settings
+            </NavLink>
+          </li>
         </ul>
       </nav>
+      
+      <div className="sidebar-footer">
+        <button className="btn btn-secondary logout-btn" onClick={logout}>
+          <LogOut size={18} />
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Settings Page Component
+const SettingsPage = () => {
+  const { user } = useAuth();
+  const [connecting, setConnecting] = useState({});
+
+  const connectPlatform = async (platform, token) => {
+    try {
+      setConnecting(prev => ({ ...prev, [platform]: true }));
+      
+      await axios.post(`${API}/platforms/connect`, {
+        platform: platform,
+        access_token: token
+      }, {
+        withCredentials: true
+      });
+      
+      // Refresh user data
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to connect platform:', error);
+    } finally {
+      setConnecting(prev => ({ ...prev, [platform]: false }));
+    }
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Settings</h1>
+          <p className="page-subtitle">Manage your account and platform connections</p>
+        </div>
+      </div>
+
+      <div className="content-section">
+        <div className="section-header">
+          <h2 className="section-title">Platform Connections</h2>
+        </div>
+        
+        <div className="platform-connections">
+          <div className="platform-connection-item">
+            <div className="platform-info">
+              <div className="platform-icon facebook-bg">
+                <Target />
+              </div>
+              <div>
+                <h4>Facebook</h4>
+                <p>Connect your Facebook account to access real user posts and insights</p>
+              </div>
+            </div>
+            <div className="connection-status">
+              {user?.has_facebook_token ? (
+                <span className="connected-badge">
+                  <CheckCircle size={16} />
+                  Connected
+                </span>
+              ) : (
+                <button 
+                  className="btn btn-primary"
+                  disabled={connecting.facebook}
+                >
+                  {connecting.facebook ? (
+                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <LinkIcon size={16} />
+                  )}
+                  Connect
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="platform-connection-item">
+            <div className="platform-info">
+              <div className="platform-icon instagram-bg">
+                <Target />
+              </div>
+              <div>
+                <h4>Instagram</h4>
+                <p>Connect Instagram Business account for post analysis and engagement metrics</p>
+              </div>
+            </div>
+            <div className="connection-status">
+              {user?.has_instagram_token ? (
+                <span className="connected-badge">
+                  <CheckCircle size={16} />
+                  Connected
+                </span>
+              ) : (
+                <button className="btn btn-secondary" disabled>
+                  Coming Soon
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="content-section">
+        <div className="section-header">
+          <h2 className="section-title">Subscription Plan</h2>
+        </div>
+        
+        <div className="plan-info">
+          <div className="current-plan">
+            <div className="plan-header">
+              <Crown size={24} />
+              <div>
+                <h3>{user?.tier?.toUpperCase()} Plan</h3>
+                <p>
+                  {user?.tier === 'free' 
+                    ? `${user?.monthly_limit || 50} leads per month`
+                    : 'Unlimited lead discovery'
+                  }
+                </p>
+              </div>
+            </div>
+            
+            {user?.tier === 'free' && (
+              <div className="upgrade-section">
+                <h4>Upgrade to Pro</h4>
+                <ul className="upgrade-features">
+                  <li><CheckCircle size={16} /> Unlimited lead discovery</li>
+                  <li><CheckCircle size={16} /> Priority API access</li>
+                  <li><CheckCircle size={16} /> Advanced analytics</li>
+                  <li><CheckCircle size={16} /> Export capabilities</li>
+                </ul>
+                <button className="btn btn-primary">
+                  Upgrade Now - $29/month
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -477,21 +973,55 @@ const Sidebar = () => {
 // Main App Component
 function App() {
   return (
-    <div className="app-container">
-      <BrowserRouter>
-        <div className="dashboard-layout">
-          <Sidebar />
-          <main className="main-content">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/discover" element={<LeadDiscovery />} />
-              <Route path="/trending" element={<TrendingTopics />} />
-            </Routes>
-          </main>
-        </div>
-      </BrowserRouter>
-    </div>
+    <AuthProvider>
+      <div className="app-container">
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<LandingPageWrapper />} />
+            <Route path="/login" element={<LoginPage />} />
+            
+            {/* Protected routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Dashboard /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/discover" element={<ProtectedRoute><DashboardLayout><LeadDiscovery /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/trending" element={<ProtectedRoute><DashboardLayout><TrendingTopics /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><DashboardLayout><SettingsPage /></DashboardLayout></ProtectedRoute>} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </AuthProvider>
   );
 }
+
+// Landing Page Wrapper
+const LandingPageWrapper = () => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <LandingPage />;
+};
+
+// Dashboard Layout
+const DashboardLayout = ({ children }) => {
+  return (
+    <div className="dashboard-layout">
+      <Sidebar />
+      <main className="main-content">
+        {children}
+      </main>
+    </div>
+  );
+};
 
 export default App;
