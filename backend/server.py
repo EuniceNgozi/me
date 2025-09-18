@@ -204,13 +204,17 @@ class SocialMediaService:
         """Mock implementation - in real app, this would use actual social media APIs"""
         leads = []
         
+        # Use default hashtags if none provided
+        if not hashtags:
+            hashtags = ["digital", "marketing", "business"]
+        
         # Simulate discovering leads based on hashtags
         sample_users = [
-            {"username": "digital_guru123", "followers": 5000, "content": f"Love using new {hashtag} tools! #entrepreneurship #digitalmarketing"},
-            {"username": "course_creator", "followers": 12000, "content": f"Just launched my new {hashtag} course. Amazing response! #onlineeducation"},
-            {"username": "saas_lover", "followers": 3500, "content": f"This {hashtag} software is a game changer for my business #productivity"},
-            {"username": "ecom_expert", "followers": 8000, "content": f"Growing my store with {hashtag} strategies #ecommerce #business"},
-            {"username": "design_pro", "followers": 6500, "content": f"Creating beautiful designs with {hashtag} tools #design #creative"},
+            {"username": "digital_guru123", "followers": 5000, "content": "Love using new {hashtag} tools! #entrepreneurship #digitalmarketing"},
+            {"username": "course_creator", "followers": 12000, "content": "Just launched my new {hashtag} course. Amazing response! #onlineeducation"},
+            {"username": "saas_lover", "followers": 3500, "content": "This {hashtag} software is a game changer for my business #productivity"},
+            {"username": "ecom_expert", "followers": 8000, "content": "Growing my store with {hashtag} strategies #ecommerce #business"},
+            {"username": "design_pro", "followers": 6500, "content": "Creating beautiful designs with {hashtag} tools #design #creative"},
         ]
         
         for hashtag in hashtags[:3]:  # Process top 3 hashtags
