@@ -653,6 +653,13 @@ def main():
     else:
         print("\n📌 ⚠️  Pinterest comprehensive integration may have issues")
     
+    # 8. Test Pinterest mock functionality
+    pinterest_mock_success = tester.test_pinterest_mock_functionality()
+    if pinterest_mock_success:
+        print("\n📌 ✅ Pinterest mock functionality is fully implemented!")
+    else:
+        print("\n📌 ⚠️  Pinterest mock functionality may have issues")
+    
     # 8. Test multi-platform support
     multi_platform_success = tester.test_multi_platform_support()
     if multi_platform_success:
