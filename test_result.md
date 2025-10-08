@@ -137,7 +137,7 @@ backend:
 
 frontend:
   - task: "Pinterest Connection Status in Settings"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "/app/frontend/src/App.js"
     stuck_count: 0
@@ -147,6 +147,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Settings page exists but doesn't show Pinterest connection status. Need to add Pinterest platform card."
+      - working: "NA"
+        agent: "main"
+        comment: "COMPLETED: Added Pinterest platform connection card to Settings page. Includes Pinterest branding, connection status, and Connect Pinterest button with loading states. Updated connectPlatform() to handle Pinterest mock connection."
 
   - task: "Pinterest Platform Selection in Lead Discovery"
     implemented: true
@@ -154,11 +157,26 @@ frontend:
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "low"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
         comment: "Pinterest checkbox already exists in lead discovery platforms selection."
+      - working: true
+        agent: "main"
+        comment: "ENHANCED: Added Pinterest connection status indicator (green checkmark) in lead discovery when user has Pinterest token, matching Facebook/Instagram pattern."
+
+  - task: "Pinterest CSS Styling"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.css"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "COMPLETED: Added .pinterest-bg class with Pinterest brand color (#e60023) to match facebook-bg and instagram-bg styling pattern."
 
 metadata:
   created_by: "main_agent"
