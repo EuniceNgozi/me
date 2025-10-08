@@ -1007,6 +1007,11 @@ async def connect_platform(
                 {"id": current_user.id},
                 {"$set": {"instagram_access_token": request.access_token}}
             )
+        elif request.platform == Platform.PINTEREST:
+            await db.users.update_one(
+                {"id": current_user.id},
+                {"$set": {"pinterest_access_token": request.access_token}}
+            )
         
         return {"success": True, "message": f"{request.platform.value} connected successfully"}
         
