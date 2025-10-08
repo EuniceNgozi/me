@@ -1019,6 +1019,79 @@ async def connect_platform(
         logger.error(f"Platform connection failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to connect platform")
 
+# Pinterest OAuth Routes
+@api_router.get("/pinterest/auth/init")
+async def initiate_pinterest_oauth(current_user: User = Depends(require_auth)):
+    """Initiate Pinterest OAuth flow (mock implementation)"""
+    # For now, return mock authorization URL since we don't have real Pinterest credentials
+    # When real credentials are available, this would redirect to Pinterest OAuth
+    mock_auth_url = f"https://mock-pinterest-oauth.com/authorize?client_id=mock&redirect_uri={BACKEND_URL}/api/pinterest/auth/callback&user_id={current_user.id}"
+    
+    return {
+        "authorization_url": mock_auth_url,
+        "message": "Mock Pinterest OAuth - click to simulate connection",
+        "mock_mode": True
+    }
+
+@api_router.get("/pinterest/auth/callback")
+async def pinterest_oauth_callback(
+    code: str = Query(None),
+    user_id: str = Query(None),
+    current_user: User = Depends(require_auth)
+):
+    """Handle Pinterest OAuth callback (mock implementation)"""
+    try:
+        if not code or not user_id:
+            raise HTTPException(status_code=400, detail="Missing OAuth parameters")
+        
+        # Mock Pinterest access token (in real implementation, exchange code for token)
+        mock_token = f"pinterest_mock_token_{user_id}_{secrets.token_hex(8)}"
+        
+        # Update user with Pinterest token
+        await db.users.update_one(
+            {"id": current_user.id},
+            {"$set": {"pinterest_access_token": mock_token}}
+        )
+        
+        logger.info(f"Pinterest connected for user {current_user.id} (mock mode)")
+        
+        return {
+            "success": True,
+            "message": "Pinterest connected successfully (mock mode)",
+            "mock_mode": True,
+            "token_preview": f"{mock_token[:20]}..."
+        }
+        
+    except Exception as e:
+        logger.error(f"Pinterest OAuth callback failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Pinterest connection failed")
+
+@api_router.post("/pinterest/auth/connect")
+async def connect_pinterest_mock(current_user: User = Depends(require_auth)):
+    """Connect Pinterest with mock token for demonstration"""
+    try:
+        # Generate mock Pinterest access token
+        mock_token = f"pinterest_mock_token_{current_user.id}_{secrets.token_hex(8)}"
+        
+        # Update user with Pinterest token
+        await db.users.update_one(
+            {"id": current_user.id},
+            {"$set": {"pinterest_access_token": mock_token}}
+        )
+        
+        logger.info(f"Pinterest mock connection created for user {current_user.id}")
+        
+        return {
+            "success": True,
+            "message": "Pinterest connected successfully (mock mode)",
+            "mock_mode": True,
+            "instructions": "This is a mock connection. Replace with real Pinterest API credentials later."
+        }
+        
+    except Exception as e:
+        logger.error(f"Pinterest mock connection failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to connect Pinterest")
+
 # Enhanced API Routes
 @api_router.get("/")
 async def root():
