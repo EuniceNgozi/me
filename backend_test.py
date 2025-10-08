@@ -490,6 +490,8 @@ def main():
     print(f"   • Authentication system is properly implemented")
     print(f"   • All protected endpoints require authentication")
     print(f"   • Instagram integration endpoints are available")
+    print(f"   • Pinterest OAuth endpoints are available")
+    print(f"   • Pinterest integration endpoints are available")
     print(f"   • Multi-platform support (Facebook, Instagram, Pinterest, TikTok)")
     print(f"   • Ready for frontend integration testing")
     
