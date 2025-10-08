@@ -669,6 +669,7 @@ class SocialMediaService:
         self.content_analyzer = ContentAnalysisService()
         self.facebook_api = FacebookAPIService()
         self.instagram_api = InstagramAPIService()
+        self.pinterest_api = PinterestAPIService()
     
     async def discover_leads_from_keywords(
         self, 
@@ -689,12 +690,50 @@ class SocialMediaService:
                 # Use real Instagram API
                 instagram_leads = await self._discover_instagram_leads(keywords, user, limit // len(platforms))
                 all_leads.extend(instagram_leads)
+            elif platform == Platform.PINTEREST and user.pinterest_access_token:
+                # Use real Pinterest API
+                pinterest_leads = await self._discover_pinterest_leads(keywords, user, limit // len(platforms))
+                all_leads.extend(pinterest_leads)
             else:
                 # Use mock data for other platforms or if no token
                 mock_leads = await self._discover_mock_leads(keywords, platform, user.id, limit // len(platforms))
                 all_leads.extend(mock_leads)
         
         return all_leads[:limit]
+    
+    async def _discover_pinterest_leads(self, keywords: List[str], user: User, limit: int) -> List[Lead]:
+        """Discover leads from Pinterest using real API"""
+        leads = []
+        
+        try:
+            # Get user's Pinterest boards
+            boards = await self.pinterest_api.get_pinterest_boards(
+                user.pinterest_access_token, limit=20
+            )
+            
+            # Analyze boards for leads
+            if boards:
+                pinterest_leads = await self.pinterest_api.analyze_pinterest_content_for_leads(boards, user.id)
+                
+                # Filter by keywords relevance
+                keyword_filtered_leads = []
+                for lead in pinterest_leads:
+                    # Check if any interests or trending topics match keywords
+                    lead_content = " ".join(lead.trending_topics + [interest.value for interest in lead.interests])
+                    keyword_matches = any(
+                        keyword.lower() in lead_content.lower() 
+                        for keyword in keywords
+                    )
+                    
+                    if keyword_matches or lead.interest_score > 35:
+                        keyword_filtered_leads.append(lead)
+                
+                leads.extend(keyword_filtered_leads[:limit])
+        
+        except Exception as e:
+            logger.error(f"Pinterest lead discovery failed: {str(e)}")
+        
+        return leads[:limit]
     
     async def _discover_instagram_leads(self, keywords: List[str], user: User, limit: int) -> List[Lead]:
         """Discover leads from Instagram using real API"""
