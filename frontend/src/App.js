@@ -933,6 +933,39 @@ const SettingsPage = () => {
               )}
             </div>
           </div>
+
+          <div className="platform-connection-item">
+            <div className="platform-info">
+              <div className="platform-icon pinterest-bg">
+                <Target />
+              </div>
+              <div>
+                <h4>Pinterest</h4>
+                <p>Connect Pinterest Business account for board analysis, pin engagement, and lead discovery</p>
+              </div>
+            </div>
+            <div className="connection-status">
+              {user?.has_pinterest_token ? (
+                <span className="connected-badge">
+                  <CheckCircle size={16} />
+                  Connected (Mock)
+                </span>
+              ) : (
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => connectPlatform('pinterest')}
+                  disabled={connecting.pinterest}
+                >
+                  {connecting.pinterest ? (
+                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <LinkIcon size={16} />
+                  )}
+                  Connect Pinterest
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
