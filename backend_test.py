@@ -442,7 +442,21 @@ def main():
     else:
         print("\n📸 ⚠️  Instagram integration may have issues")
     
-    # 5. Test multi-platform support
+    # 5. Test Pinterest OAuth endpoints
+    pinterest_oauth_success = tester.test_pinterest_oauth_endpoints()
+    if pinterest_oauth_success:
+        print("\n📌 ✅ Pinterest OAuth endpoints are properly protected!")
+    else:
+        print("\n📌 ⚠️  Pinterest OAuth endpoints may have issues")
+    
+    # 6. Test Pinterest integration features
+    pinterest_success = tester.test_pinterest_integration()
+    if pinterest_success:
+        print("\n📌 ✅ Pinterest integration endpoints are properly protected!")
+    else:
+        print("\n📌 ⚠️  Pinterest integration may have issues")
+    
+    # 7. Test multi-platform support
     multi_platform_success = tester.test_multi_platform_support()
     if multi_platform_success:
         print("\n🌐 ✅ Multi-platform support is working!")
