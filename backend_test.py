@@ -332,6 +332,30 @@ class ViralLeadsAPITester:
             "days_back": 30
         }
         
+        success, response = self.run_test(
+            "Multi-Platform Lead Discovery",
+            "POST",
+            "leads/discover",
+            401,  # Should require auth
+            data=multi_platform_data
+        )
+        
+        # Test trending topics for each platform
+        platforms = ["facebook", "instagram", "pinterest", "tiktok"]
+        platform_tests = []
+        
+        for platform in platforms:
+            platform_success, platform_response = self.run_test(
+                f"{platform.title()} Trending Topics",
+                "GET",
+                "trending",
+                401,  # Should require auth
+                params={"platform": platform}
+            )
+            platform_tests.append(platform_success)
+        
+        return success and all(platform_tests)
+        
     def test_pinterest_mock_functionality(self):
         """Test Pinterest mock functionality by examining the backend code behavior"""
         print(f"\n📌 Testing Pinterest Mock Data Functionality...")
