@@ -1025,7 +1025,8 @@ async def initiate_pinterest_oauth(current_user: User = Depends(require_auth)):
     """Initiate Pinterest OAuth flow (mock implementation)"""
     # For now, return mock authorization URL since we don't have real Pinterest credentials
     # When real credentials are available, this would redirect to Pinterest OAuth
-    mock_auth_url = f"https://mock-pinterest-oauth.com/authorize?client_id=mock&redirect_uri={BACKEND_URL}/api/pinterest/auth/callback&user_id={current_user.id}"
+    # Mock Pinterest OAuth URL (replace with real Pinterest OAuth when credentials are available)
+    mock_auth_url = f"https://mock-pinterest-oauth.com/authorize?client_id=mock&redirect_uri=callback&user_id={current_user.id}"
     
     return {
         "authorization_url": mock_auth_url,
