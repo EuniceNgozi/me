@@ -984,7 +984,8 @@ async def get_current_user_info(current_user: User = Depends(require_auth)):
         "leads_discovered": current_user.leads_discovered,
         "monthly_limit": current_user.monthly_limit,
         "has_facebook_token": bool(current_user.facebook_access_token),
-        "has_instagram_token": bool(current_user.instagram_access_token)
+        "has_instagram_token": bool(current_user.instagram_access_token),
+        "has_pinterest_token": bool(current_user.pinterest_access_token)
     }
 
 # Platform Connection Routes
