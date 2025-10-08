@@ -192,9 +192,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Pinterest API Integration with Mock Data"
-    - "Pinterest OAuth Endpoints"
     - "Pinterest Connection Status in Settings"
+    - "Pinterest Platform Selection in Lead Discovery"
+    - "Pinterest CSS Styling"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
