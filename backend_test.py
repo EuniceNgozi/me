@@ -559,7 +559,14 @@ def main():
     else:
         print("\n📌 ⚠️  Pinterest integration may have issues")
     
-    # 7. Test multi-platform support
+    # 7. Test comprehensive Pinterest integration
+    pinterest_comprehensive_success = tester.test_pinterest_comprehensive()
+    if pinterest_comprehensive_success:
+        print("\n📌 ✅ Pinterest comprehensive integration is properly protected!")
+    else:
+        print("\n📌 ⚠️  Pinterest comprehensive integration may have issues")
+    
+    # 8. Test multi-platform support
     multi_platform_success = tester.test_multi_platform_support()
     if multi_platform_success:
         print("\n🌐 ✅ Multi-platform support is working!")
