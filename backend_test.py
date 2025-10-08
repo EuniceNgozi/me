@@ -240,11 +240,88 @@ class ViralLeadsAPITester:
         
         return success and success_trending and success_connect
 
+    def test_pinterest_oauth_endpoints(self):
+        """Test Pinterest OAuth endpoints"""
+        print(f"\n📌 Testing Pinterest OAuth Endpoints...")
+        
+        # Test Pinterest OAuth init endpoint
+        success_init, response_init = self.run_test(
+            "Pinterest OAuth Init",
+            "GET",
+            "pinterest/auth/init",
+            401  # Should require auth
+        )
+        
+        # Test Pinterest OAuth callback endpoint
+        success_callback, response_callback = self.run_test(
+            "Pinterest OAuth Callback",
+            "GET",
+            "pinterest/auth/callback",
+            401,  # Should require auth
+            params={"code": "test_code", "user_id": "test_user_123"}
+        )
+        
+        # Test Pinterest mock connection endpoint
+        success_connect, response_connect = self.run_test(
+            "Pinterest Mock Connection",
+            "POST",
+            "pinterest/auth/connect",
+            401  # Should require auth
+        )
+        
+        return success_init and success_callback and success_connect
+
+    def test_pinterest_integration(self):
+        """Test Pinterest-specific integration features"""
+        print(f"\n📌 Testing Pinterest Integration...")
+        
+        # Test Pinterest platform in lead discovery
+        pinterest_test_data = {
+            "platforms": ["pinterest"],
+            "keywords": ["digital marketing", "course creation", "productivity"],
+            "max_leads": 10,
+            "min_followers": 1000,
+            "days_back": 30
+        }
+        
+        success, response = self.run_test(
+            "Pinterest Lead Discovery",
+            "POST",
+            "leads/discover",
+            401,  # Should require auth
+            data=pinterest_test_data
+        )
+        
+        # Test Pinterest trending topics
+        success_trending, trending_response = self.run_test(
+            "Pinterest Trending Topics",
+            "GET",
+            "trending",
+            401,  # Should require auth
+            params={"platform": "pinterest"}
+        )
+        
+        # Test platform connection endpoint for Pinterest
+        connect_data = {
+            "platform": "pinterest",
+            "access_token": "pinterest_mock_token_123"
+        }
+        
+        success_connect, connect_response = self.run_test(
+            "Pinterest Platform Connection",
+            "POST",
+            "platforms/connect",
+            401,  # Should require auth
+            data=connect_data
+        )
+        
+        return success and success_trending and success_connect
+
     def test_multi_platform_support(self):
-        """Test multi-platform support including Instagram"""
+        """Test multi-platform support including Instagram and Pinterest"""
         print(f"\n🌐 Testing Multi-Platform Support...")
         
-        # Test with all platforms including Instagram
+        # Test with all platforms including Instagram and Pinterest
         multi_platform_data = {
             "platforms": ["facebook", "instagram", "pinterest", "tiktok"],
             "keywords": ["digital marketing", "online business"],
