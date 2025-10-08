@@ -11,6 +11,8 @@ class ViralLeadsAPITester:
         self.tests_passed = 0
         self.test_results = []
         self.session = requests.Session()  # Use session for cookies
+        self.authenticated = False
+        self.mock_user_data = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None, use_auth=False):
         """Run a single API test"""
