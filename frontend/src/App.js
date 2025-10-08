@@ -843,12 +843,20 @@ const SettingsPage = () => {
     try {
       setConnecting(prev => ({ ...prev, [platform]: true }));
       
-      await axios.post(`${API}/platforms/connect`, {
-        platform: platform,
-        access_token: token
-      }, {
-        withCredentials: true
-      });
+      if (platform === 'pinterest') {
+        // Use Pinterest mock connection endpoint
+        await axios.post(`${API}/pinterest/auth/connect`, {}, {
+          withCredentials: true
+        });
+      } else {
+        // Use general platform connection for other platforms
+        await axios.post(`${API}/platforms/connect`, {
+          platform: platform,
+          access_token: token
+        }, {
+          withCredentials: true
+        });
+      }
       
       // Refresh user data
       window.location.reload();
