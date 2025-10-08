@@ -412,6 +412,107 @@ class ViralLeadsAPITester:
         
         return ai_working
 
+    def test_pinterest_comprehensive(self):
+        """Comprehensive Pinterest integration test with realistic scenarios"""
+        print(f"\n📌 Testing Pinterest Comprehensive Integration...")
+        
+        # Test Pinterest OAuth endpoints without auth (should fail)
+        print(f"\n   Testing Pinterest OAuth endpoints without authentication...")
+        
+        # 1. Test Pinterest OAuth init
+        success_init, response_init = self.run_test(
+            "Pinterest OAuth Init - No Auth",
+            "GET",
+            "pinterest/auth/init",
+            401
+        )
+        
+        # 2. Test Pinterest OAuth callback
+        success_callback, response_callback = self.run_test(
+            "Pinterest OAuth Callback - No Auth",
+            "GET",
+            "pinterest/auth/callback",
+            401,
+            params={"code": "mock_auth_code_123", "user_id": "test_user_456"}
+        )
+        
+        # 3. Test Pinterest mock connection
+        success_connect, response_connect = self.run_test(
+            "Pinterest Mock Connection - No Auth",
+            "POST",
+            "pinterest/auth/connect",
+            401
+        )
+        
+        # 4. Test Pinterest platform connection
+        pinterest_connect_data = {
+            "platform": "pinterest",
+            "access_token": "pinterest_mock_token_test_123"
+        }
+        
+        success_platform, response_platform = self.run_test(
+            "Pinterest Platform Connection - No Auth",
+            "POST",
+            "platforms/connect",
+            401,
+            data=pinterest_connect_data
+        )
+        
+        # 5. Test Pinterest lead discovery
+        pinterest_lead_data = {
+            "platforms": ["pinterest"],
+            "keywords": ["digital marketing", "course creation", "productivity tools"],
+            "max_leads": 15,
+            "min_followers": 1000,
+            "days_back": 30
+        }
+        
+        success_leads, response_leads = self.run_test(
+            "Pinterest Lead Discovery - No Auth",
+            "POST",
+            "leads/discover",
+            401,
+            data=pinterest_lead_data
+        )
+        
+        # 6. Test user info endpoint (should include has_pinterest_token field)
+        success_user, response_user = self.run_test(
+            "User Info with Pinterest Token Field - No Auth",
+            "GET",
+            "auth/me",
+            401
+        )
+        
+        # 7. Test Pinterest trending topics
+        success_trending, response_trending = self.run_test(
+            "Pinterest Trending Topics - No Auth",
+            "GET",
+            "trending",
+            401,
+            params={"platform": "pinterest"}
+        )
+        
+        print(f"\n   📊 Pinterest Authentication Test Results:")
+        print(f"      • OAuth Init: {'✅ Protected' if success_init else '❌ Not Protected'}")
+        print(f"      • OAuth Callback: {'✅ Protected' if success_callback else '❌ Not Protected'}")
+        print(f"      • Mock Connection: {'✅ Protected' if success_connect else '❌ Not Protected'}")
+        print(f"      • Platform Connection: {'✅ Protected' if success_platform else '❌ Not Protected'}")
+        print(f"      • Lead Discovery: {'✅ Protected' if success_leads else '❌ Not Protected'}")
+        print(f"      • User Info: {'✅ Protected' if success_user else '❌ Not Protected'}")
+        print(f"      • Trending Topics: {'✅ Protected' if success_trending else '❌ Not Protected'}")
+        
+        all_protected = all([
+            success_init, success_callback, success_connect, 
+            success_platform, success_leads, success_user, success_trending
+        ])
+        
+        if all_protected:
+            print(f"\n   ✅ All Pinterest endpoints properly require authentication!")
+        else:
+            print(f"\n   ⚠️  Some Pinterest endpoints may not be properly protected!")
+        
+        return all_protected
+
 def main():
     print("🚀 Starting Viral Leads API Testing...")
     print("=" * 60)
