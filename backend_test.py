@@ -660,7 +660,7 @@ def main():
     else:
         print("\n📌 ⚠️  Pinterest mock functionality may have issues")
     
-    # 8. Test multi-platform support
+    # 9. Test multi-platform support
     multi_platform_success = tester.test_multi_platform_support()
     if multi_platform_success:
         print("\n🌐 ✅ Multi-platform support is working!")
