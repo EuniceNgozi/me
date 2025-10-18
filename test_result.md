@@ -196,7 +196,7 @@ test_plan:
     - "Pinterest Platform Selection in Lead Discovery"
     - "Pinterest CSS Styling"
   stuck_tasks: []
-  test_all: false
+  test_all: true
   test_priority: "high_first"
 
 agent_communication:
