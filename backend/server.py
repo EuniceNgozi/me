@@ -990,9 +990,12 @@ class SocialMediaService:
 social_media_service = SocialMediaService()
 
 # Authentication Routes
+class SessionRequest(BaseModel):
+    session_id: str
+
 @api_router.post("/auth/process-session")
 async def process_session(
-    session_id: str,
+    request: SessionRequest,
     response: Response
 ):
     """Process session ID from Emergent auth"""
