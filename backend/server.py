@@ -1001,7 +1001,7 @@ async def process_session(
     """Process session ID from Emergent auth"""
     try:
         # Get user data from Emergent
-        user_data = await AuthService.get_session_data(session_id)
+        user_data = await AuthService.get_session_data(request.session_id)
         if not user_data:
             raise HTTPException(status_code=400, detail="Invalid session ID")
         
